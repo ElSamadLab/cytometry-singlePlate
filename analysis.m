@@ -1,47 +1,31 @@
-
 clearvars
-doses = 250./2.^(11:-1:0);
-[plate_p1,plate_order_p1] = fcs_plate_read('/home/kieran/Desktop/AA/140330_mixforlater_e2_p4_250_down_p1/96 Well - U bottom/')
-
-[plate_p2,plate_order_p2] = fcs_plate_read('/home/kieran/Desktop/AA/140330_mixforlater_e2_p4_250_down_p2/96 Well - U bottom/')
-%%
-for i = 1:24, YFP_P1{i} = plate_p1(i).DATA(:,8) ./ plate_p1(i).DATA(:,5); end
-for i = 1:24, YFP_P1_CLEAN{i} = YFP_P1{i}(YFP_P1{i}>0); end
-
-for i = 1:24, YFP_P2{i} = plate_p2(i).DATA(:,8) ./ plate_p2(i).DATA(:,5); end
-for i = 1:24, YFP_P2_CLEAN{i} = YFP_P2{i}(YFP_P2{i}>0); end
+fcs_file = 'sic1_aug27/96 Well - U bottom/';
+[plate,plate_order] = fcs_plate_read(fcs_file)
 
 %%
-% [a index] = sort(plate_order_p1);
-% YFP_P1 = YFP_P1(index);
-% YFP_P1_CLEAN = YFP_P1_CLEAN(index);
-% [a index] = sort(plate_order_p2);
-% YFP_P2 = YFP_P2(index);
-% YFP_P2_CLEAN = YFP_P2_CLEAN(index);
-
-y1 = YFP_P1_CLEAN;
-y2 = YFP_P2_CLEAN;
+for i = 1:96, 
+    yfp_corrected{i} = plate(i).DATA(:,8) ./ plate(i).DATA(:,5); 
+    yfp_corrected_clean{i} = yfp_corrected{i}(yfp_corrected{i}>0);
+end
 %%
+% Filter
+y = yfp_corrected_clean;
+%%
+% Summary stats
+cells_median = @(x) cellfun(@nanmedian,x);
+cells_cv2 = @(x) cellfun(@nanvar,x) ./ cellfun(@nanmean,x).^2;
+cells_var = @(x) cellfun(@nanvar,x);
+
+y_median = cells_median(y);
+y_var = cells_var(y);
+y_cv2 = cells_cv2(y); 
+
+%%
+reshape_to_plate = @(x) reshape(x,12,8);
+y_median = reshape_to_plate(y_median);
+y_cv2 = reshape_to_plate(y_cv2);
 figure
-ym1 = cellfun(@nanmedian,y1);
-ymr = reshape(ym1,12,2);
-subplot(211)
-semilogx(doses, ymr)
-title('linear')
-legend('Estradiol','Progesterone', 'location', 'northwest')
-subplot(212)
-semilogx(doses, log10(ymr))
-title('log')
-legend('Estradiol','Progesterone', 'location', 'northwest')
-%%
-figure
-ym1 = cellfun(@nanmedian,y2);
-ymr = reshape(ym1,12,2);
-subplot(211)
-semilogx(doses, ymr)
-title('linear')
-legend('Estradiol','Progesterone', 'location', 'northwest')
-subplot(212)
-semilogx(doses, log10(ymr))
-title('log')
-legend('Estradiol','Progesterone', 'location', 'northwest')
+subplot(1,2,1)
+imagesc(y_median')
+subplot(1,2,2)
+imagesc(y_cv2',[0,3])
