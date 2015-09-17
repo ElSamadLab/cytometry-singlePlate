@@ -26,6 +26,6 @@ y_median = reshape_to_plate(y_median);
 y_cv2 = reshape_to_plate(y_cv2);
 figure
 subplot(1,2,1)
-imagesc(y_median')
+imagesc(log(y_median)')
 subplot(1,2,2)
-imagesc(y_cv2',[0,3])
+imagesc(log(y_cv2)')
